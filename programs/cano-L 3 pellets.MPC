@@ -1,0 +1,127 @@
+\ cano-L.mpc
+\ FR 1 on Left Lever
+\ FR 1 on Right Lever
+\ 3 food pellets delivery per reinforcer on Left Lever
+\ 1 food pellet delivery per reinforcer on Right Lever
+\ 20 second response time
+\ 60 minute sessions
+
+\a is r total session responses on Left Lever
+\b is total session reinforcers on Left Lever
+\c is r total session responses on Right Lever
+\d is total session reinforcers on Right Lever
+\f is session time in ticks; stops when sr delivered
+\e is time in session seconds, stops when sr delivered
+\q helps to time sessions
+\t is response time in seconds
+\i trial number
+\g is dummy variable for limited hold on 20s
+\s helps track state of lever (0=retracted, 1=extended)
+
+
+PRINTPOINTS=10
+PRINTFORMAT=7.3
+PRINTCOLUMNS=6
+
+printvars=a,b,c,d,e,g,i
+diskvars=a,b,c,d,e,g,i
+
+\inputs
+^LleverR=1
+^LleverP=2
+^RleverR=3
+^RleverP=4
+
+
+\outputs
+^Llever=1
+^Rlever=2
+^pellet=7
+^Llight=5
+^Rlight=6
+^house=8
+
+\sets up timer that stops when sr delivered
+\e times session in seconds, sr time not included
+\m times interreinforcer intervals in seconds, sr time not included
+s.s.1,
+s1,
+   #start:on^house,^Llight,^Llever,^Rlight,^Rlever;set s=1;add i--->s2
+s2,
+   0.02":add q;if q=50 [@one,@two]
+   	@one:add e;add g;set q=0--->sx
+	@two:--->sx
+   #z1:--->s2
+
+
+\ends session
+s.s.2,
+s1,
+   #start:--->s2
+s2,
+   1":show 1,resp,a;show 2,sr,b; show 3,resp, c; show 4,sr,d;show 5,secs,e;show 6,ticks,f;show 7,trials,i;if e=3600[@five,@six]
+         @five:set x=-987.987,print--->stopabortflush
+         @six:--->sx
+
+\retracts levers after 20s response time
+s.s.3,
+s1,
+   #start:--->s2
+
+s2,
+   1":IF g=20 [@three, @four]
+      @three:off^Llight,^Llever,^Rlight,^Rlever;set s=0;set g=0--->s3
+      @four:--->sx
+   
+s3,
+   1":IF g=70 [@seven,@eight]
+      @seven:on^Llight,^Llever,^Rlight,^Rlever;add i;set s=1;set g=0--->s2
+      @eight:--->sx
+  
+\counts responses on Left Lever, then retracts
+\a is total responses per session 
+\delivers reinforcers
+\b is total reinforcers 
+
+s.s.4,
+s1,
+   #start:--->s2
+
+s2,
+   #r^LleverR:IF s=1 [@pink, @floyd]
+                 @pink:off^Llight,^Llever,^Rlight,^Rlever;on^pellet;add a--->s3
+                 @floyd:--->s2
+s3,
+   .1":off^pellet;add b--->s4
+
+s4,
+   .1":on^pellet--->s5
+
+s5,
+   .1":off^pellet;add b--->s6
+
+s6,
+   .1":on^pellet--->s7
+
+s7,
+   .1":off^pellet;add b--->s2
+
+
+\counts responses on Right Lever, then retracts
+\c is total responses per session 
+\delivers reinforcers
+\d is total reinforcers 
+
+s.s.5,
+s1,
+   #start:--->s2
+
+s2,
+   #r^RleverR:IF s=1 [@the, @doors]
+                 @the:off^Rlight,^Rlever,^Llight,^Llever;add c--->s3
+                 @doors:--->s2
+s3,
+   .05":on^pellet--->s4
+
+s4,
+   .05":off^pellet;add d--->s2

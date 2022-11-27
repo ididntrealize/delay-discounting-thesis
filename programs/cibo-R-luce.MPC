@@ -1,0 +1,469 @@
+\\\\\\\* boiko-dd-anticipation.mpc
+  \\\\\\* started 1/8/2022
+   \\\\\\* combine "Adelay-L 3 pellets 8 trials Update.mpc" & "Annika Auto Welcome3.mpc"
+      \\\\* Delay Discount program which tracks anticipatory entrances into food tray after larger later lever press
+
+
+\*** to update \\ 5 blocks of 8 trials each (0s, 4s, 8s, 16s, 32s) - ascending order
+
+
+
+\
+\\
+\\\  **************** global variables & config options ************** \\\
+
+\
+\\session block data variables
+\\\ a = left lever presses & 
+\\\\b = reinforcers (treat count)
+  DIM a = 5
+  DIM b = 5
+
+\ 
+\\right lever presses & reinforcers (treat count)
+\\\ c = right lever presses & 
+\\\\d = reinforcers (treat count)
+  DIM c = 5
+  DIM d = 5
+
+
+\
+\\Photobeam sensor variables
+\\\gate entrances (trials delineated by "-1", blocks delineated by -4, -8, -16, -32, end at -99)
+  DIM v = 1000
+\
+\\
+\\\latency timer variables
+  DIM p = 2
+  ^Latency = 1
+  ^trialtime = 2
+
+\
+\\
+\\\timing / counter variables
+  DIM t = 4
+  ^SessionSeconds = 0
+  ^TrialSeconds = 1
+  ^BlockSeconds = 2
+  ^MasterMillisecond = 3
+
+\
+\\
+\\\trial / block variables
+  DIM i = 2
+  ^trial = 0
+  ^block = 1
+
+\
+\\
+\\\print and save options
+PRINTPOINTS=10
+PRINTFORMAT=7.3
+PRINTCOLUMNS=6
+printvars=a,b,c,d,t(^SessionSeconds),v
+diskvars=a,b,c,d,t(^SessionSeconds),t(^TrialSeconds),v,i(^trial),i(^block)
+
+
+
+\
+\\hardware input pointers
+^LleverR=1
+^LleverP=2
+^RleverR=3
+^photobeam=4
+
+
+\
+\\hardware output pointers
+^Llever=1
+^Rlever=2
+^pellet=7
+^Llight=5
+^Rlight=6
+^house=8
+
+
+
+\
+\\
+\\\  **************** global controller procedures ************** \\\
+
+\
+\\
+\\\timer synchronizer
+\\\\master di-millisecond timer
+\\\\\feeds total Session seconds t(^SessionSeconds) and 
+\\\\\\Trial specific seconds t(^TrialSeconds)
+s.s.1,
+s1,
+   #start:on^house,^Llight,^Llever,^Rlight,^Rlever;
+          add i(^trial);
+          add i(^block);
+         \rapid testing start on block 2 not 1 - 
+         \\to test larger later delay related functions
+         \\\Do this command twice: 
+         \\\\add i(^block);
+          set s=1--->s2
+s2,
+   0.01":add t(^MasterMillisecond);
+          IF t(^MasterMillisecond) >=100 [@OneSecond, @less]
+   	      @OneSecond:add t(^SessionSeconds);
+                         add t(^TrialSeconds);
+                         set t(^MasterMillisecond)=0 --->sx
+	      @less:--->sx
+   #z1:--->s2
+
+
+\
+\\
+\\\session concluder
+\\\\ends session after t(^SessionSeconds) >= 3600
+s.s.2,
+s1,
+   #start:--->s2
+s2,
+   1":show 1,secs,t(^SessionSeconds);
+      show 2,resp,a(0);
+      show 3,sr,b(0);
+      show 4,resp,c(0);
+      show 5,sr,d(0);
+
+       \rapid testing 1 trial per block.
+       \\t(^SessionSeconds) >= 400
+      IF t(^SessionSeconds) >= 3600 [@end,@continue]
+         @end: set x=-987.987, print --->stopabortflush
+         @continue: --->sx
+
+
+\
+\\
+\\\Lever controller - 
+\\\\Retract each trial t(^TrialSeconds) >= 20
+\\\\\Extend after trial 
+s.s.3,
+s1,
+   #start:--->s2
+
+s2,
+       \rapid testing 1 trial per block.
+       \\t(^TrialSeconds) >= 15
+   1":IF t(^TrialSeconds) >= 20 [@RetractLever, @wait]
+          @RetractLever:off^Llight,^Llever,^Rlight,^Rlever;
+                        set s=0;
+                        set t(^TrialSeconds) = 0 ---> s3
+
+          @wait:--->sx
+   
+s3,
+       \rapid testing 1 trial per block.
+       \\t(^TrialSeconds) >= 25
+   1":IF t(^TrialSeconds) >= 70 [@ExtendLever,@lesser]
+          @ExtendLever:on^Llight,^Llever,^Rlight,^Rlever;
+                       set s=1;
+                       set t(^TrialSeconds)=0;
+                       add i(^trial) ---> s2
+
+          @lesser:--->sx
+
+
+\sets up timer for each block
+\counts block #
+s.s.4,
+s1,
+    #start:--->s2
+
+s2,
+   1":add t(^BlockSeconds);
+     \rapid testing 1 trial per block. 
+     \\IF t(^BlockSeconds) >=80
+       IF t(^BlockSeconds) >=720 [@newblock, @continue]
+               @newblock:set t(^BlockSeconds)=0; 
+                         add i(^block) ---> sx
+               @continue:--->sx
+
+
+\
+\\
+\\\  **************** Lever input handlers ************** \\\
+
+\
+\\
+\\\Left lever handler
+s.s.5,
+s1,
+   #start: --->s2
+
+s2,
+   #r^LleverR: IF s=1 [@leverout, @leverin]
+              @leverout:off^Rlight,^Rlever,^Llight,^Llever;
+                        add c(0) --->s3
+                        
+              @leverin:--->s2
+
+s3,
+    .1":IF i(^block)=1 [@One, @NotOne]
+              @One: add c(1); z10 ---> s4
+              @NotOne:--->s6
+s4,
+    .05":on^pellet--->s5
+
+s5,
+    .05":off^pellet;add d(0); add d(1)--->s2
+
+s6,
+    .1":IF i(^block)=2 [@Two, @NotTwo]
+              @Two: add c(2); z11 ---> s7
+              @NotTwo:--->s9
+s7,
+    .05":on^pellet--->s8
+
+s8,
+    .05":off^pellet;add d(0); add d(2)--->s2
+
+s9,
+    .1":IF i(^block)=3 [@Three, @NotThree]
+              @Three: add c(3); z12 --->s10
+              @NotThree:--->s12
+
+s10,
+    .05":on^pellet--->s11
+
+s11,
+    .05":off^pellet;add d(0); add d(3)--->s2
+
+s12,
+    .1":IF i(^block)=4 [@Four, @NotFour]
+              @Four: add c(4); z13 --->s13
+              @NotFour:--->s15
+
+s13,
+    .05":on^pellet--->s14
+
+s14,
+    .05":off^pellet;add d(0);add d(4)--->s2
+
+
+s15,
+    .1":IF i(^block)=5 [@Five, @NotFive]
+              @Five: add c(5); z14 --->s16
+              @NotFive:--->sx
+s16,
+    .05":on^pellet--->s17
+
+s17,
+    .05":off^pellet;add d(0);add d(5)--->s2
+   
+
+\
+\\
+\\\Right lever handler
+s.s.6,
+s1,
+    #start: --->s2
+
+s2, 
+    #r^RleverR: IF s=1 [@leverout, @leverin]
+              @leverout:off^Llight,^Llever,^Rlight,^Rlever;
+                        add a(0) --->s3
+              @leverin:--->s2
+s3,
+   .1":IF i(^block)=1 [@One, @NotOne]
+              @One:Z2--->s2
+              @NotOne:--->s4
+s4,
+   .1":IF i(^block)=2 [@Two, @NotTwo]
+              @Two:Z3--->s2
+              @NotTwo:--->s5
+s5,
+   .1":IF i(^block)=3 [@Three, @NotThree]
+              @Three:Z4--->s2
+              @NotThree:--->s6
+S6,
+   .1":IF i(^block)=4 [@Four, @NotFour]
+              @Four:Z5--->s2
+              @NotFour:--->s7
+S7,
+   .1":IF i(^block)=5 [@Five, @NotFive]
+              @Five:Z6--->s2
+              @NotFive:--->sX
+s8,
+   #Z7:--->s2
+
+
+\
+\\
+\\\  **************** trial block procedures ************** \\\
+
+\
+\\ ***** Trial block 1 - 0s delay
+s.s.7,
+s1,
+   #Z2: add a(1); Z10; 
+        on^pellet--->s2
+
+s2,
+   .1":off^pellet;add b(0); add b(1)--->s3
+ 
+s3,
+   .1":on^pellet--->s4
+ 
+s4,
+   .1":off^pellet;add b(0); add b(1)--->s5
+ 
+s5,
+   .1":on^pellet--->s6
+ 
+s6,
+   .1":off^pellet;add b(0); add b(1);Z7--->s1
+
+
+\
+\\ ***** Trial block 2 - 4s formerly 10s delay
+s.s.8,
+s1,
+   #Z3: Z8 ---> s2
+
+s2,
+    4":add a(2); Z11;
+        on^pellet ---> s3
+        
+s3,
+    .1":off^pellet;add b(0); add b(2)--->s4
+ 
+s4,
+    .1":on^pellet--->s5
+ 
+s5,
+    .1":off^pellet;add b(0); add b(2)--->s6
+ 
+s6,
+    .1":on^pellet--->s7
+ 
+s7,
+    .1":off^pellet;add b(0); add b(2);Z7--->s1
+ 
+
+\
+\\ ***** Trial block 3 - 8s formerly 20s delay
+s.s.9,
+s1,
+    #Z4: Z8 --->s2
+
+s2,
+    8":add a(3); Z12;
+        on^pellet ---> s3
+
+s3,
+    .1":off^pellet;add b(0); add b(3)--->s4
+ 
+s4,
+    .1":on^pellet--->s5
+ 
+s5,
+    .1":off^pellet;add b(0); add b(3)--->s6
+ 
+s6,
+    .1":on^pellet--->s7
+ 
+s7,
+    .1":off^pellet;add b(0); add b(3);Z7--->s1
+ 
+
+\
+\\ ***** Trial block 4 - 16s formerly 40s delay
+s.s.10,
+s1,
+    #Z5: Z8 ---> s2
+
+s2,
+    16":add a(4); Z13;
+        on^pellet ---> s3
+
+s3,
+    .1":off^pellet;add b(0); add b(4)--->s4
+ 
+s4,
+    .1":on^pellet--->s5
+ 
+s5,
+    .1":off^pellet;add b(0); add b(4)--->s6
+ 
+s6,
+    .1":on^pellet--->s7
+ 
+s7,
+    .1":off^pellet;add b(0); add b(4);Z7--->s1
+
+
+\
+\\ ***** Trial block 5 - 32s formerly 60s delay
+s.s.11,
+s1,
+    #Z6: Z8 --->s2
+
+s2,
+    32":add a(5); Z14;
+        on^pellet ---> s3
+
+s3,
+    .1":off^pellet;add b(0); add b(5)--->s4
+ 
+s4,
+    .1":on^pellet--->s5
+ 
+s5,
+    .1":off^pellet;add b(0); add b(5)--->s6
+ 
+s6,
+    .1":on^pellet--->s7
+ 
+s7,
+    .1":off^pellet;add b(0); add b(5);Z7--->s1
+
+
+
+\
+\\
+\\\ **************** Photobeam sensor timer ************** \\
+s.s.12,
+s1,
+    #Z8: ---> s2
+
+s2, 
+    0.01": SET Y = Y + 0.01 ---> s2
+    #Z9: SET v(p(^latency)) = Y; ADD p(^latency); SET v(p(^latency)) = -987.987 ---> sx
+    #Z10: SET Y = 0 ---> s1
+    #Z11: SET Y = 0 ---> s1
+    #Z12: SET Y = 0 ---> s1
+    #Z13: SET Y = 0 ---> s1
+    #Z14: SET Y = 0 ---> s1
+    #Z15: SET Y = 0 ---> s1
+\
+\\start tracking 
+s.s.13,
+s1,
+    #Z8: SET p(^trialtime) = 0.1; SET p(^trialtime) = p(^trialtime) * 1" ---> s2
+
+s2,
+    p(^trialtime)#T: ---> s3
+
+s3,
+    #R^photobeam: Z9 ---> sx
+    #Z10: ---> s1
+    #Z11: ---> s1
+    #Z12: ---> s1
+    #Z13: ---> s1
+    #Z14: ---> s1
+    #Z15: ---> s1
+
+
+\
+\\add spacer into photobeam latency array
+s.s.14,
+s1,
+    #Z10: SET v(p(^latency)) = -1; ADD p(^latency); SET v(p(^latency)) = -987.987 ---> s1
+    #Z11: SET v(p(^latency)) = -4; ADD p(^latency); SET v(p(^latency)) = -987.987 ---> s1
+    #Z12: SET v(p(^latency)) = -8; ADD p(^latency); SET v(p(^latency)) = -987.987 ---> s1
+    #Z13: SET v(p(^latency)) = -16; ADD p(^latency); SET v(p(^latency)) = -987.987 ---> s1
+    #Z14: SET v(p(^latency)) = -32; ADD p(^latency); SET v(p(^latency)) = -987.987 ---> s1
+    #Z15: SET v(p(^latency)) = -99; ADD p(^latency); SET v(p(^latency)) = -987.987 ---> s1

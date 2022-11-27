@@ -1,0 +1,71 @@
+\ amanda-R.mpc
+\ FR 1 on Right Lever
+\ 1 food pellet delivery per reinforcer
+\ 20 minute sessions
+
+\a is r total session responses
+\b is total session reinforcers
+\c is session time in ticks; stops when sr delivered
+\e is time in session seconds,stops when sr delivered
+\q helps to time sessions
+
+PRINTPOINTS=10
+PRINTFORMAT=7.3
+PRINTCOLUMNS=6
+
+printvars=a,b,e
+diskvars=a,b,e
+
+\inputs
+^leverR=3
+^leverP=4
+
+
+\outputs
+^Llever=1
+^Rlever=2
+^pellet=7
+^Llight=5
+^Rlight=6
+^house=8
+
+\sets up timer that stops when sr delivered
+\e times session in seconds, sr time not included
+\m times interreinforcer intervals in seconds, sr time not included
+s.s.1,
+s1,
+   #start:on^house,^Rlight,^Rlever--->s2
+s2,
+   0.02":add q;if q=50 [@one,@two]
+   	@one:add e;set q=0--->sx
+	@two:--->sx
+   #z1:--->s2
+
+
+\ends session
+s.s.2,
+s1,
+   #start:--->s2
+s2,
+   1":show 1,resp,a;show 2,sr,b;show 3,secs,e;show 4,ticks,c;if e=1200[@five,@six]
+         @five:set x=-987.987,print--->stopabortflush
+         @six:--->sx
+
+\counts responses
+\a is total responses per session
+\delivers reinforcers
+\b is total reinforcers
+
+s.s.3,
+s1,
+   #start:--->s2
+
+s2,
+   #r^leverR:off^Rlight;add a--->s3
+
+s3,
+
+   .05":on^pellet--->s4
+
+s4,
+   .05":off^pellet;on^Rlight;add b--->s2
