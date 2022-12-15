@@ -1,6 +1,6 @@
 import json
 import csv
-from datetime import date
+from datetime import date, datetime
 import time
 
 from config import Config
@@ -77,18 +77,17 @@ class AnalyzeData :
         block_choices = {}
         
         for session in obj :
-            
             #don't analyze if name not in whitelist
             unaccepted_names = self.check_name_consistency(obj, config.accepted_name_map)
             if session["rat_name"] in unaccepted_names :
                 continue
+            
 
             #add new rat obj if doesn't exist
             safe_rat_name = config.accepted_name_map[session["rat_name"]]
             
             if safe_rat_name not in block_choices :
                 block_choices[safe_rat_name] = self.block_choices_template()
-
 
             #don't analyze if before first_stability_date
             first_stable_date = config.stability_start_date[safe_rat_name]
@@ -102,6 +101,9 @@ class AnalyzeData :
             session_date = session["date"][:-2]
             session_date += "20" + session["date"][-2:]
 
+
+            # print("\n", session_date)
+            # print(session["start_time"])
             
             if first_stable_date != -1 :
                 session_timestamp = time.strptime(session_date, "%m/%d/%Y")
@@ -112,8 +114,16 @@ class AnalyzeData :
 
                 #don't analyze if limit of stable sessions has been reached
                 analyzed_session_count = block_choices[safe_rat_name]["ss"]["session_count"]
-                if analyzed_session_count >= config.stability_session_count :
+                if analyzed_session_count >= config.stability_session_count :                    
                     continue
+
+                # Check for sessions that didn't run long enough
+                format = '%H:%M:%S'
+                time_elap = datetime.strptime(session["end_time"], format) - datetime.strptime(session["start_time"], format)
+                
+                if time_elap.total_seconds() < 50 * 60 :
+                    print("session being analyzed ran less than 50 minutes: ", time_elap)
+                    print("session Date: ", session_date)
             
             #increment sessions counters
             block_choices[safe_rat_name]["ss"]["session_count"] += 1
@@ -145,7 +155,7 @@ class AnalyzeData :
                 #count each entry in each trial
                 for trial in session["block_" + block + "s"]["entries"] :
                     total_entries += len(trial)
-                    
+
                     for i, entry in enumerate(trial) : 
                         # account for case where timer didn't stop soon enough
                         total_entry_lat += entry % 90
@@ -277,11 +287,11 @@ class AnalyzeData :
                 "mean first entry 4s", 
                 "mean first entry 8s", 
                 "mean first entry 16s", 
-                "mean first entry 32s", 
-                "mean entry latency 4s", 
-                "mean entry latency 8s", 
-                "mean entry latency 16s", 
-                "mean entry latency 32s" 
+                "mean first entry 32s" 
+                # "mean entry latency 4s", 
+                # "mean entry latency 8s", 
+                # "mean entry latency 16s", 
+                # "mean entry latency 32s"
                 # "mean ll 0s",
                 # "mean ll 4s",
                 # "mean ll 8s",
@@ -310,10 +320,10 @@ class AnalyzeData :
                 avg_first_entries_16s = entry_stats[rat]["block_16s"]["first_entry_lat"]
                 avg_first_entries_32s = entry_stats[rat]["block_32s"]["first_entry_lat"]
 
-                avg_entries_lat_4s = entry_stats[rat]["block_4s"]["avg_entry_lat"]
-                avg_entries_lat_8s = entry_stats[rat]["block_8s"]["avg_entry_lat"]
-                avg_entries_lat_16s = entry_stats[rat]["block_16s"]["avg_entry_lat"]
-                avg_entries_lat_32s = entry_stats[rat]["block_32s"]["avg_entry_lat"]
+                # avg_entries_lat_4s = entry_stats[rat]["block_4s"]["avg_entry_lat"]
+                # avg_entries_lat_8s = entry_stats[rat]["block_8s"]["avg_entry_lat"]
+                # avg_entries_lat_16s = entry_stats[rat]["block_16s"]["avg_entry_lat"]
+                # avg_entries_lat_32s = entry_stats[rat]["block_32s"]["avg_entry_lat"]
 
                 writer.writerow([
                     name, 
@@ -325,11 +335,11 @@ class AnalyzeData :
                     avg_first_entries_4s,
                     avg_first_entries_8s,
                     avg_first_entries_16s,
-                    avg_first_entries_32s,
-                    avg_entries_lat_4s,
-                    avg_entries_lat_8s,
-                    avg_entries_lat_16s,
-                    avg_entries_lat_32s
+                    avg_first_entries_32s
+                    # avg_entries_lat_4s,
+                    # avg_entries_lat_8s,
+                    # avg_entries_lat_16s,
+                    # avg_entries_lat_32s
                     ])
             
 

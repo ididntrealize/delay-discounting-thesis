@@ -22,8 +22,7 @@ class ExtractData :
             all_trials_str = all_trials_str + review_file.split("\n",2)[2]
             
         all_trials = all_trials_str.split("\n\n\n")
-        #print(all_trials[0:5])
-        
+
         #compile trial data into json
         serialized_dd_trials, ignored_trials, err = self.serialize_trials(all_trials)
         
@@ -49,6 +48,8 @@ class ExtractData :
                 "rat_name" : "not found",
                 "date" : "not found",
                 "program" : "not found",
+                "start_time": "not found",
+                "end_time": "not found",
                 "total_ll" : -1,
                 "total_ss" : -1,
                 "block_0s" : {
@@ -83,11 +84,15 @@ class ExtractData :
                 #split text to extract values
                 rat_name = trial_str.split("Subject: ")[1].split("\n")[0]
                 date = trial_str.split("Start Date: ")[1].split("\n")[0]
+                start_time = trial_str.split("Start Time: ")[1].split("\n")[0]
+                end_time = trial_str.split("End Time: ")[1].split("\n")[0]
                 program = trial_str.split("MSN: ")[1].split("\n")[0]
 
                 trial["rat_name"] = rat_name.lower()
                 trial["date"] = date
                 trial["program"] = program
+                trial["start_time"] = start_time
+                trial["end_time"] = end_time
                 
             except :
                 return False, False, "error extracting name, date, or program name for: \n" + trial_str
@@ -101,7 +106,6 @@ class ExtractData :
             if rat_name == "0" :
                 ignored_trials["unnamed"] += 1
                 continue
-            
             
             try :
                 #process ll array

@@ -1,5 +1,5 @@
 class Config :
-    #manage misspelled names || "name in ledger" : "corrected name"
+    #manage misspelled names  "name in ledger" : "corrected name"
     #must keep ALL rat names mapped to themselves, i.e. "susan" : "susan",
     accepted_name_map = {
         "cecilia" : "cecilia",
@@ -20,7 +20,7 @@ class Config :
     #Date of FIRST stable session.
     stability_start_date = {
         "marian": "11/11/22",
-        "sara": "11/08/22", #-1
+        "sara": "11/28/22",
         "fran": "11/08/22",
         "catherine": "11/14/22",
         "cecilia": "11/04/22",
