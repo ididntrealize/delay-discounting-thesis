@@ -280,14 +280,14 @@ class AnalyzeData :
             headers = [
                 "name", 
                 "auc", 
-                "mean entries 4s", 
-                "mean entries 8s", 
-                "mean entries 16s", 
-                "mean entries 32s", 
-                "mean first entry 4s", 
-                "mean first entry 8s", 
-                "mean first entry 16s", 
-                "mean first entry 32s" 
+                "head entries in 4s block", 
+                "head entries in 8s block", 
+                "head entries in 16s block", 
+                "head entries in 32s block", 
+                "first entry (s) in 4s block", 
+                "first entry (s) in 8s block", 
+                "first entry (s) in 16s block", 
+                "first entry (s) in 32s block" 
                 # "mean entry latency 4s", 
                 # "mean entry latency 8s", 
                 # "mean entry latency 16s", 

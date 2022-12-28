@@ -174,7 +174,7 @@ class GraphData :
         plt.bar(courses, values, color ='black',
                 width = 0.4)
         
-        plt.ylabel("Average First Entry Latency")
+        plt.ylabel("Average First Entry Latency (s)")
         plt.xlabel("Delay Block")
         plt.title("Overall First Entry Latency Per Block")
         plt.show()
@@ -196,7 +196,7 @@ class GraphData :
 
             pearsonr = scipy.stats.pearsonr(rats["auc"], rats[dependent_var])
 
-            plt.rcParams.update({'font.size': 18})
+            # plt.rcParams.update({'font.size': 18})
 
             plt.scatter(rats["auc"], rats[dependent_var], color="black")
             plt.title(dependent_var.title().replace("S", "s") + " per LL choice")
@@ -212,5 +212,5 @@ class GraphData :
             #plt.text(.5,2.2,"third")
 
             plt.show()
-            print("r =", round(pearsonr[0],3), "\np =", round(pearsonr[1], 3))
+            print("r =", f'{round(pearsonr[0],3):.3f}', "\np =", f'{round(pearsonr[1],3):.3f}')
             print("\n\n")
