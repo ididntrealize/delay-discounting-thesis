@@ -49,9 +49,13 @@ class GraphData :
 
         
         plt.plot(x, y, color="black")
-        plt.title("Overall Discounting Curve")
-        plt.xlabel("Delay Block")
-        plt.ylabel("Percent Larger Later Choice")
+
+        plt.title("Overall Discounting Curve", {'fontname':'Times New Roman'})
+        plt.xlabel("Delay Block", {'fontname':'Times New Roman'})
+        plt.ylabel("Percent Larger Later Choice", {'fontname':'Times New Roman'})
+        plt.xticks(fontname = "Times New Roman")
+        plt.yticks(fontname = "Times New Roman")
+
         plt.ylim(0, 100)
         plt.show()
 
@@ -74,6 +78,9 @@ class GraphData :
 
 
         #create table
+
+        plt.rcParams['font.family'] = ['Times New Roman']
+
         table = plt.table(cellText=table_data, loc='center', cellLoc='left', edges="open")
         table.scale(1, 1.5)
 
@@ -83,6 +90,7 @@ class GraphData :
         
         for pos in ['right', 'top', 'bottom', 'left']:
             plt.gca().spines[pos].set_visible(False)
+
 
         plt.title("Area Under the Curve (AUC) by Subject")
         plt.show()
@@ -125,6 +133,7 @@ class GraphData :
         # creating the bar plot
         plt.bar(courses, values, color ='black',
                 width = 0.4)
+        plt.rcParams['font.family'] = ['Times New Roman']
         
         plt.ylabel("Average Head Entries")
         plt.xlabel("Delay Block")
@@ -173,7 +182,8 @@ class GraphData :
         # creating the bar plot
         plt.bar(courses, values, color ='black',
                 width = 0.4)
-        
+        plt.rcParams['font.family'] = ['Times New Roman']
+
         plt.ylabel("Average First Entry Latency (s)")
         plt.xlabel("Delay Block")
         plt.title("Overall First Entry Latency Per Block")
@@ -197,6 +207,7 @@ class GraphData :
             pearsonr = scipy.stats.pearsonr(rats["auc"], rats[dependent_var])
 
             # plt.rcParams.update({'font.size': 18})
+            plt.rcParams['font.family'] = ['Times New Roman']
 
             plt.scatter(rats["auc"], rats[dependent_var], color="black")
             plt.title(dependent_var.title().replace("S", "s") + " per LL choice")
