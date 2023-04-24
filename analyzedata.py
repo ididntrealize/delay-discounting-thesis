@@ -178,9 +178,29 @@ class AnalyzeData :
                 # block_choices[safe_rat_name]["ll"]["block_" + block + "s"]["total_entry_lat"] = round(curr_block["total_entry_lat"], 2)
                 # block_choices[safe_rat_name]["ll"]["block_" + block + "s"]["first_entry_lat"] = round(curr_block["first_entry_lat"], 2)
                 # block_choices[safe_rat_name]["ll"]["block_" + block + "s"]["last_entry_lat"] = round(curr_block["last_entry_lat"], 2)
-            
-        return block_choices
+        
+        return self.remove_bad_data(block_choices)
     
+    def remove_bad_data(self, block_choices) :
+        clean_data = {}
+        excluded_rats = []
+
+        for rat in block_choices :
+            safe_rat_name = config.accepted_name_map[rat]
+
+            for block in [0, 4, 8, 16, 32] :
+                if block_choices[rat]["ll"]["block_" + str(block) + "s"]["total"] == 0 :
+                    if safe_rat_name not in excluded_rats :
+                        print("excluding rat: ", safe_rat_name)
+                    print("No LL choice in the ", block, "s block")
+                    print("\n")
+                    excluded_rats.append(safe_rat_name)
+                    break
+            
+            if safe_rat_name not in excluded_rats :
+                clean_data[safe_rat_name] = block_choices[rat]
+
+        return clean_data
     
     def percent_ll(self, block_choices) :
         rat_percent_ll = {}
@@ -226,6 +246,7 @@ class AnalyzeData :
                 else :
                     entry_stat_means[rat]["block_" + safe_block + "s"]["avg_entry_lat"] = 0
 
+        
         return entry_stat_means
     
     

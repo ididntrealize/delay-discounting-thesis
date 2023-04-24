@@ -53,8 +53,6 @@ class GraphData :
         plt.title("Overall Discounting Curve")
         plt.xlabel("Delay Block")
         plt.ylabel("Percent Larger Later Choice")
-        plt.xticks(fontname = "Times New Roman")
-        plt.yticks(fontname = "Times New Roman")
 
         plt.ylim(0, 100)
         plt.show()
