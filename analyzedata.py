@@ -365,7 +365,4 @@ class AnalyzeData :
             
 
             print("\ncreated csv")
-            return 'rats-' + today.strftime("%m-%d-%Y") + '.csv'
-            
-            
-            
+            return 'rats-' + today.strftime("%m-%d-%Y") + '.csv'        

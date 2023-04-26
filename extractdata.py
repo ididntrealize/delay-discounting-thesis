@@ -1,8 +1,6 @@
 import os
 import re
-import json
 import glob
-import shutil
 from itertools import groupby
 
 from config import Config
